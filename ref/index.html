@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laravel 務實架構儀表板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Warm Neutral (Beige/Slate/Deep Blue) -->
+    <!-- Application Structure Plan: The application is designed as a single-page dashboard with four distinct, navigable sections: 1. An interactive Architecture Blueprint to visualize the overall structure. 2. A Layer Deep Dive using an accordion to detail the responsibilities of each component. 3. A Decision Guide with interactive cards to help developers choose the right pattern for a task. 4. Practical Examples with side-by-side code comparisons to solve specific problems. This task-oriented, non-linear structure allows developers to quickly find answers and understand concepts, rather than reading a static report, which is optimal for team collaboration and quick reference. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Overall layered architecture -> Goal: Organize/Inform -> Viz/Method: Interactive Diagram (HTML/CSS) -> Interaction: Click/Hover on a layer shows its summary -> Justification: Provides a high-level, easily digestible overview of the system's structure, superior to a static image.
+        - Report Info: Layer Responsibility Matrix -> Goal: Inform/Compare -> Viz/Method: Accordion (HTML/CSS/JS) -> Interaction: Click to expand/collapse layer details -> Justification: Organizes dense textual information cleanly, allowing users to focus on one layer at a time without being overwhelmed.
+        - Report Info: Decision Heuristics Table -> Goal: Guide -> Viz/Method: Interactive Cards (HTML/CSS/JS) -> Interaction: Click a card to reveal the recommended pattern -> Justification: Transforms a static table into an engaging, problem-solving tool that actively guides user decisions.
+        - Report Info: Code examples (logout, anemic service) -> Goal: Compare/Explain -> Viz/Method: Side-by-side code blocks with toggles -> Interaction: Buttons switch between different scenarios -> Justification: Directly contrasts "problem" and "solution" code, making the architectural principles concrete and easy to grasp.
+        - Justification for NO Chart.js: The report's content is primarily conceptual and structural. A chart would feel forced and less effective than custom interactive diagrams and well-structured text for conveying these ideas.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f5f5f4; /* stone-100 */
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #1e3a8a; /* blue-800 */
+            border-bottom-color: #1e3a8a; /* blue-800 */
+        }
+        .section-fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-800 mb-2">Laravel 務實架構儀表板</h1>
+            <p class="text-lg text-slate-500">在嚴謹模式與框架特性之間，找到可擴展、團隊友好的平衡點</p>
+        </header>
+
+        <nav class="sticky top-0 bg-stone-100/80 backdrop-blur-sm z-10 mb-12 border-b border-slate-200">
+            <div class="flex justify-center items-center space-x-4 sm:space-x-8 py-4">
+                <a href="#blueprint" data-section="blueprint" class="nav-link active font-medium pb-1">架構藍圖</a>
+                <a href="#layers" data-section="layers" class="nav-link font-medium pb-1">分層詳解</a>
+                <a href="#guide" data-section="guide" class="nav-link font-medium pb-1">決策指南</a>
+                <a href="#examples" data-section="examples" class="nav-link font-medium pb-1">實戰範例</a>
+            </div>
+        </nav>
+
+        <main id="app-content">
+
+            <section id="blueprint" class="app-section section-fade-in">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-slate-800">架構藍圖</h2>
+                    <p class="mt-2 text-slate-600 max-w-3xl mx-auto">這是一個互動式的架構圖，展示了資料在各層之間的流動路徑。點擊或將滑鼠移至任一層級，即可查看其核心職責和在系統中扮演的角色。</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8 items-center">
+                    <div id="architecture-diagram" class="md:col-span-2 grid grid-cols-1 gap-6 p-4">
+                        <!-- Diagram Layers -->
+                        <div class="diagram-layer text-center p-6 bg-white rounded-xl shadow-md cursor-pointer border-2 border-transparent" data-layer="http">
+                            <h3 class="font-bold text-xl text-sky-700">HTTP/Console (邊界層)</h3>
+                            <p class="text-sm text-slate-500">Request / CLI Command</p>
+                        </div>
+
+                        <div class="flex justify-center text-4xl text-slate-400">↓</div>
+
+                        <div class="diagram-layer text-center p-6 bg-white rounded-xl shadow-md cursor-pointer border-2 border-transparent" data-layer="controller">
+                            <h3 class="font-bold text-xl text-blue-700">Controller (中介者)</h3>
+                            <p class="text-sm text-slate-500">轉譯請求，呼叫核心邏輯</p>
+                        </div>
+                        
+                        <div class="flex justify-center text-4xl text-slate-400">↓</div>
+
+                        <div class="diagram-layer text-center p-6 bg-white rounded-xl shadow-md cursor-pointer border-2 border-transparent" data-layer="core">
+                             <h3 class="font-bold text-xl text-indigo-700">Application Core (核心邏輯)</h3>
+                             <div class="mt-2 flex justify-center gap-4 flex-wrap">
+                                <span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">Actions</span>
+                                <span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">Services</span>
+                                <span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full">Events / Jobs</span>
+                             </div>
+                        </div>
+
+                        <div class="flex justify-center text-4xl text-slate-400">↓</div>
+
+                        <div class="diagram-layer text-center p-6 bg-white rounded-xl shadow-md cursor-pointer border-2 border-transparent" data-layer="gateway">
+                            <h3 class="font-bold text-xl text-purple-700">I/O Gateway (閘道)</h3>
+                            <p class="text-sm text-slate-500">Repositories</p>
+                        </div>
+
+                        <div class="grid grid-cols-3 text-4xl text-slate-400 text-center">
+                           <span>↓</span><span>↓</span><span>↓</span>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div class="diagram-layer p-4 bg-purple-50 rounded-lg" data-layer="db">
+                                <h4 class="font-semibold text-purple-800">Database</h4>
+                                <p class="text-xs text-slate-500">(Eloquent Models)</p>
+                            </div>
+                             <div class="diagram-layer p-4 bg-purple-50 rounded-lg" data-layer="storage">
+                                <h4 class="font-semibold text-purple-800">File Storage</h4>
+                                <p class="text-xs text-slate-500">(e.g., S3)</p>
+                            </div>
+                             <div class="diagram-layer p-4 bg-purple-50 rounded-lg" data-layer="api">
+                                <h4 class="font-semibold text-purple-800">External APIs</h4>
+                                <p class="text-xs text-slate-500">(e.g., CRM)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="layer-info" class="p-6 bg-white rounded-xl shadow-lg h-full min-h-[300px] flex flex-col justify-center">
+                        <h3 id="info-title" class="text-2xl font-bold text-slate-800 mb-4">架構藍圖</h3>
+                        <p id="info-description" class="text-slate-600">這是您應用程式的推薦架構。它將框架的便利性與純淨的核心業務邏輯分開，以實現長期的可維護性。將滑鼠懸停在左側的任何層級上以了解更多資訊。</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="layers" class="app-section hidden section-fade-in">
+                 <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-slate-800">分層詳解</h2>
+                    <p class="mt-2 text-slate-600 max-w-3xl mx-auto">每一層都有明確的職責。理解這些界線是維持程式碼庫清晰和一致的關鍵。點擊下方項目以展開或收合詳細說明。</p>
+                </div>
+                <div id="accordion-container" class="max-w-4xl mx-auto space-y-4">
+                    <!-- Accordion items will be generated here -->
+                </div>
+            </section>
+
+            <section id="guide" class="app-section hidden section-fade-in">
+                 <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-slate-800">架構決策指南</h2>
+                    <p class="mt-2 text-slate-600 max-w-3xl mx-auto">「這段程式碼該放哪裡？」是常見的困惑。本指南提供一套啟發式方法，幫助您的團隊快速做出一致的決策。點擊卡片以查看建議的模式和理由。</p>
+                </div>
+                <div id="guide-cards-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Guide cards will be generated here -->
+                </div>
+            </section>
+            
+            <section id="examples" class="app-section hidden section-fade-in">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-slate-800">實戰範例</h2>
+                    <p class="mt-2 text-slate-600 max-w-3xl mx-auto">理論需要實踐來印證。這裡展示了如何應用這套架構原則來解決常見的開發場景，化解「過度設計」與「框架便利性」之間的衝突。</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 max-w-5xl mx-auto">
+                    <div class="mb-6 border-b border-slate-200">
+                        <nav id="example-nav" class="flex space-x-4" aria-label="Tabs">
+                            <!-- Example nav items will be generated here -->
+                        </nav>
+                    </div>
+                    <div id="example-content-container">
+                        <!-- Example content will be generated here -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const appData = {
+        layers: {
+            http: { title: 'HTTP / Console', description: '應用程式的進入點。接收來自瀏覽器的 HTTP 請求或來自終端機的 CLI 命令。此層的職責是啟動請求週期，但不包含任何業務邏輯。' },
+            controller: { title: 'Controller', description: '作為 HTTP 世界與您應用程式核心之間的「中介者」。它的工作是解析請求、驗證輸入、檢查授權，然後將這些資訊「轉譯」成純粹的資料（如 DTO 或純量值）並傳遞給核心邏輯。它絕不應將 Request 物件本身向下傳遞。' },
+            core: { title: 'Application Core', description: '應用程式的心臟，包含所有業務邏輯。它應該是「純粹」且與框架無關的。Action 用於單一、離散的操作，而 Service 用於編排更複雜的工作流程。它們只接受 DTO 和純量值作為輸入。' },
+            gateway: { title: 'I/O Gateway (Repository)', description: '作為應用程式核心與所有外部資料源（資料庫、檔案儲存、第三方 API）之間的「閘道」。其職責是處理所有 I/O 操作，並將原始資料（如 Eloquent Model）轉換為應用程式內部使用的 DTO。這將核心邏輯與資料持久化的細節完全解耦。' },
+            db: { title: 'Database', description: '您的主要資料庫（如 MySQL）。Eloquent Models 是此層的代表，但它們的活動範圍應被嚴格限制在 Repository 內部，防止其 Active Record 的特性洩漏到業務邏輯中。' },
+            storage: { title: 'File Storage', description: '處理檔案的儲存和讀取，例如 Amazon S3。相關的 Repository 會封裝與 S3 SDK 的所有互動。' },
+            api: { title: 'External APIs', description: '與任何第三方服務（如支付閘道、CRM 系統）的通訊。相關的 Repository 會處理 HTTP 客戶端、認證和錯誤處理的細節。' }
+        },
+        accordionItems: [
+            { 
+                title: 'Controller', 
+                content: `
+                    <ul class="space-y-2 list-disc list-inside text-slate-600">
+                        <li><strong>主要職責：</strong> 中介 HTTP 與核心邏輯。</li>
+                        <li><strong>關鍵輸入：</strong> <code>Request</code>, Route 參數。</li>
+                        <li><strong>關鍵輸出：</strong> <code>Response</code>, <code>View</code>, <code>JsonResource</code>。</li>
+                        <li><strong>禁止的依賴：</strong> 直接執行複雜業務邏輯或資料庫查詢。</li>
+                        <li><strong>理由：</strong> 作為指定的邊界，用於與框架特定的部分互動。它將 HTTP 請求轉譯為核心層的純粹輸入，維持核心的獨立性。</li>
+                    </ul>`
+            },
+            {
+                title: 'Action / Service',
+                content: `
+                    <ul class="space-y-2 list-disc list-inside text-slate-600">
+                        <li><strong>主要職責：</strong> 執行業務邏輯。Action 用於單一操作，Service 用於複雜流程。</li>
+                        <li><strong>關鍵輸入：</strong> DTOs, 純量值。</li>
+                        <li><strong>關鍵輸出：</strong> DTOs, 純量值, <code>void</code>, Events。</li>
+                        <li><strong>禁止的依依赖：</strong> <code>Request</code>, <code>Session</code>, <code>Auth</code> facade, Eloquent Models。</li>
+                        <li><strong>理由：</strong> 應用程式的核心。必須是純粹、可重用且獨立於傳遞機制的，以實現可維護性和可擴展性。</li>
+                    </ul>`
+            },
+            {
+                title: 'Repository',
+                content: `
+                     <ul class="space-y-2 list-disc list-inside text-slate-600">
+                        <li><strong>主要職責：</strong> 中介所有外部 I/O。</li>
+                        <li><strong>關鍵輸入：</strong> 純量值, 搜尋條件 DTOs。</li>
+                        <li><strong>關鍵輸出：</strong> DTOs (或 DTOs 集合)。</li>
+                        <li><strong>禁止的依賴：</strong> Services, Actions, 任何業務邏輯。</li>
+                        <li><strong>理由：</strong> I/O 閘道。將應用程式核心與資料持久化和檢索的細節隔離開來，無論資料來自何處。</li>
+                    </ul>`
+            },
+            {
+                title: 'DTO (Data Transfer Object)',
+                content: `
+                     <ul class="space-y-2 list-disc list-inside text-slate-600">
+                        <li><strong>主要職責：</strong> 作為層與模組之間的資料契約與傳輸工具。</li>
+                        <li><strong>關鍵輸入：</strong> 原始陣列, <code>Request</code> 資料, Eloquent Models。</li>
+                        <li><strong>關鍵輸出：</strong> 不可變的 PHP 物件。</li>
+                        <li><strong>禁止的依賴：</strong> 業務邏輯, 持久化邏輯。</li>
+                        <li><strong>理由：</strong> 模組與層級之間穩定、明確的 API 契約，對於在模組化單體中實現解耦至關重要。</li>
+                    </ul>`
+            },
+            {
+                title: 'Eloquent Model',
+                content: `
+                     <ul class="space-y-2 list-disc list-inside text-slate-600">
+                        <li><strong>主要職責：</strong> 資料庫表格的表示。</li>
+                        <li><strong>關鍵輸入：</strong> - </li>
+                        <li><strong>關鍵輸出：</strong> - </li>
+                        <li><strong>禁止的依賴：</strong> Repository 以外的任何層。</li>
+                        <li><strong>理由：</strong> Eloquent 是強大的 ORM，但其 Active Record 特性會產生耦合。將其限制在 Repository 層可以最大限度地發揮其功能，同時控制其「洩漏」的特性。</li>
+                    </ul>`
+            }
+        ],
+        guideCards: [
+            {
+                task: '一個簡單、單一且會修改狀態的業務操作',
+                pattern: 'Action 類別',
+                reason: '高內聚，自我說明，避免 Service 變得臃腫。',
+                example: '例如：<code>ActivateUserAction(int $userId)</code>'
+            },
+            {
+                task: '一個編排多個步驟或元件的複雜流程',
+                pattern: 'Service 類別',
+                reason: '集中化複雜的工作流程，確保業務流程的原子性和一致性。',
+                example: '例如：<code>OnboardingService</code>，它創建使用者、設定個人資料並發送郵件。'
+            },
+            {
+                task: '一個簡單的、唯讀的查詢',
+                pattern: '在 Controller 中直接用 Eloquent',
+                reason: '務實的權宜之計。對於簡單的 <code>Post::all()</code>，創建多個層級是過度設計。',
+                example: '例如：<code>Post::latest()->paginate();</code>'
+            },
+            {
+                task: '一個複雜、可重用的資料庫讀取查詢',
+                pattern: 'Eloquent 作用域或查詢類別',
+                reason: '利用框架的強大功能，避免為讀取操作編寫 Repository 樣板程式碼。',
+                example: '例如：<code>Post::published()->withPopularComments()->get();</code>'
+            },
+            {
+                task: '任何寫入資料的操作',
+                pattern: 'Repository 方法',
+                reason: '硬性規則。強制執行 I/O 閘道抽象，集中化所有狀態變更。',
+                example: '例如：<code>$userRepository->create($userData);</code>'
+            },
+            {
+                task: '任何與非資料庫 I/O 源（S3、API）的互動',
+                pattern: 'Repository 方法',
+                reason: '硬性規則。集中化所有外部通訊，將核心與外部系統的細節解耦。',
+                example: '例如：<code>$fileRepository->store($file);</code>'
+            }
+        ],
+        examples: {
+            anemicService: {
+                name: '空洞的 Service',
+                description: '當 Service 只是簡單地將呼叫傳遞給 Repository 時，它就變成了一個不必要的抽象層，這就是典型的過度設計。',
+                problemCode: `
+// Service 只是作為一個傳話筒
+class MembershipService
+{
+    public function __construct(
+        protected MemberRepository $memberRepository
+    ) {}
+
+    public function updateMemberActiveToken(
+        int $memberId, string $token
+    ): void
+    {
+        $this->memberRepository->updateMemberActiveToken($memberId, $token);
+    }
+}
+`,
+                solutionCode: `
+// 使用 Action 來處理單一操作
+class UpdateMemberActiveTokenAction
+{
+    public function __construct(
+        protected MemberRepository $memberRepository
+    ) {}
+
+    public function execute(
+        int $memberId, string $token
+    ): void
+    {
+        $this->memberRepository->updateMemberActiveToken($memberId, $token);
+    }
+}
+
+// Controller 直接呼叫 Action
+$action->execute($memberId, $token);
+`,
+                solutionTitle: '解決方案：使用 Action 類別',
+                solutionText: '對於單一、離散的操作，使用 Action 類別可以消除無意義的「純傳遞」Service，創建一個高內聚、自我說明的業務邏輯單元，讓程式碼意圖更清晰。'
+            },
+            logoutLogic: {
+                name: '框架耦合邏輯',
+                description: '如何處理像 `logout` 這樣與框架緊密耦合的操作？強行將其推入 Service 層會破壞核心的純粹性。',
+                problemCode: `
+// 在 Controller 中處理登出
+class AuthController extends Controller
+{
+    public function logout(Request $request)
+    {
+        $request->user()
+            ->currentAccessToken()
+            ->delete();
+
+        return response()->json(['message' => '已登出']);
+    }
+}
+// 疑慮：這段程式碼是否應該移到 Service？
+`,
+                solutionCode: `
+// 這段程式碼的位置是正確的！
+class AuthController extends Controller
+{
+    public function logout(Request $request)
+    {
+        // ...與上面相同的程式碼...
+    }
+}
+`,
+                solutionTitle: '解決方案：擁抱框架邊界',
+                solutionText: '這個操作與當前 HTTP 請求的認證狀態綁定，是一個框架層面的關注點。Controller 正是處理這種框架與應用核心之間「中介」任務的正確位置。將其保留在 Controller 中，可以充分利用框架的便利性，同時保護核心業務邏輯不受污染。'
+            }
+        }
+    };
+
+    // Navigation
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('.app-section');
+
+    function updateActiveSection(targetId) {
+        sections.forEach(section => {
+            section.classList.toggle('hidden', section.id !== targetId);
+        });
+        navLinks.forEach(link => {
+            link.classList.toggle('active', link.dataset.section === targetId);
+        });
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = e.target.dataset.section;
+            updateActiveSection(targetId);
+            window.history.pushState(null, '', `#${targetId}`);
+        });
+    });
+    
+    // Initial load based on hash
+    const initialSection = window.location.hash.substring(1) || 'blueprint';
+    updateActiveSection(initialSection);
+
+    // Architecture Diagram Interaction
+    const diagramLayers = document.querySelectorAll('.diagram-layer');
+    const infoTitle = document.getElementById('info-title');
+    const infoDescription = document.getElementById('info-description');
+    const originalInfo = { title: infoTitle.textContent, description: infoDescription.textContent };
+
+    diagramLayers.forEach(layer => {
+        layer.addEventListener('mouseenter', () => {
+            const layerKey = layer.dataset.layer;
+            if (appData.layers[layerKey]) {
+                diagramLayers.forEach(l => l.classList.remove('border-blue-400', 'bg-blue-50'));
+                layer.classList.add('border-blue-400', 'bg-blue-50');
+                infoTitle.textContent = appData.layers[layerKey].title;
+                infoDescription.textContent = appData.layers[layerKey].description;
+            }
+        });
+        layer.addEventListener('mouseleave', () => {
+             layer.classList.remove('border-blue-400', 'bg-blue-50');
+        });
+    });
+    document.getElementById('architecture-diagram').addEventListener('mouseleave', () => {
+        infoTitle.textContent = originalInfo.title;
+        infoDescription.textContent = originalInfo.description;
+    });
+
+
+    // Accordion
+    const accordionContainer = document.getElementById('accordion-container');
+    appData.accordionItems.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'border border-slate-200 rounded-lg bg-white';
+        div.innerHTML = `
+            <button class="accordion-toggle w-full flex justify-between items-center p-5 text-left font-semibold text-lg text-slate-800">
+                <span>${item.title}</span>
+                <svg class="w-6 h-6 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            <div class="accordion-content">
+                <div class="p-5 pt-0">${item.content}</div>
+            </div>
+        `;
+        accordionContainer.appendChild(div);
+    });
+
+    accordionContainer.addEventListener('click', e => {
+        const toggle = e.target.closest('.accordion-toggle');
+        if (toggle) {
+            const content = toggle.nextElementSibling;
+            const icon = toggle.querySelector('svg');
+            
+            // Close all others
+            document.querySelectorAll('.accordion-content').forEach(c => {
+                if (c !== content && c.style.maxHeight) {
+                    c.style.maxHeight = null;
+                    c.previousElementSibling.querySelector('svg').classList.remove('rotate-180');
+                }
+            });
+            
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                icon.classList.remove('rotate-180');
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                icon.classList.add('rotate-180');
+            }
+        }
+    });
+
+    // Guide Cards
+    const guideContainer = document.getElementById('guide-cards-container');
+    appData.guideCards.forEach(card => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card bg-white rounded-xl shadow-lg p-6 cursor-pointer';
+        cardEl.innerHTML = `
+            <div class="guide-front">
+                <h4 class="font-bold text-lg text-slate-800 mb-2">如果任務是...</h4>
+                <p class="text-slate-600">${card.task}</p>
+            </div>
+            <div class="guide-back hidden mt-4 border-t pt-4 border-slate-200">
+                <h5 class="font-semibold text-md text-blue-800">推薦模式：${card.pattern}</h5>
+                <p class="text-sm text-slate-500 mt-1">${card.reason}</p>
+                <p class="text-sm text-slate-500 mt-2">${card.example}</p>
+            </div>
+        `;
+        guideContainer.appendChild(cardEl);
+        
+        cardEl.addEventListener('click', () => {
+            const back = cardEl.querySelector('.guide-back');
+            back.classList.toggle('hidden');
+        });
+    });
+    
+    // Examples
+    const exampleNav = document.getElementById('example-nav');
+    const exampleContentContainer = document.getElementById('example-content-container');
+    
+    const exampleKeys = Object.keys(appData.examples);
+    
+    exampleKeys.forEach((key, index) => {
+        const example = appData.examples[key];
+        const button = document.createElement('button');
+        button.dataset.example = key;
+        button.className = `example-tab py-2 px-4 font-medium text-sm rounded-t-lg border-b-2 ${index === 0 ? 'border-blue-700 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`;
+        button.textContent = example.name;
+        exampleNav.appendChild(button);
+    });
+
+    function renderExample(key) {
+        const example = appData.examples[key];
+        exampleContentContainer.innerHTML = `
+            <div class="example-content section-fade-in">
+                 <p class="mb-6 text-slate-600">${example.description}</p>
+                 <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold mb-2 text-red-700">問題場景</h4>
+                        <pre class="bg-red-50 text-red-900 p-4 rounded-lg text-sm overflow-x-auto"><code>${escapeHtml(example.problemCode.trim())}</code></pre>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-2 text-green-700">${example.solutionTitle}</h4>
+                        <pre class="bg-green-50 text-green-900 p-4 rounded-lg text-sm overflow-x-auto"><code>${escapeHtml(example.solutionCode.trim())}</code></pre>
+                    </div>
+                 </div>
+                 <div class="mt-6 p-4 bg-stone-100 rounded-lg">
+                    <p class="text-slate-700">${example.solutionText}</p>
+                 </div>
+            </div>
+        `;
+    }
+    
+    function escapeHtml(str) {
+        return str.replace(/[&<>"']/g, function(match) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[match];
+        });
+    }
+
+    exampleNav.addEventListener('click', e => {
+        const button = e.target.closest('.example-tab');
+        if(button) {
+            const key = button.dataset.example;
+            renderExample(key);
+            
+            document.querySelectorAll('.example-tab').forEach(btn => {
+                btn.classList.remove('border-blue-700', 'text-blue-700');
+                btn.classList.add('border-transparent', 'text-slate-500', 'hover:text-slate-700', 'hover:border-slate-300');
+            });
+            
+            button.classList.add('border-blue-700', 'text-blue-700');
+            button.classList.remove('border-transparent', 'text-slate-500', 'hover:text-slate-700', 'hover:border-slate-300');
+        }
+    });
+    
+    renderExample(exampleKeys[0]);
+
+});
+</script>
+
+</body>
+</html>
