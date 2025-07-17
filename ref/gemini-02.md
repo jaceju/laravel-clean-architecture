@@ -115,9 +115,9 @@ execute 或 __invoke），用於執行一個特定的業務任務。
 
 ```php
 // app/Actions/Members/UpdateMemberActiveTokenAction.php  
-namespace AppActionsMembers;
+namespace App\Actions\Members;
 
-use AppRepositoriesMemberRepository;
+use App\Repositories\MemberRepository;
 
 class UpdateMemberActiveTokenAction  
 {  
